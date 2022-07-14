@@ -1,0 +1,368 @@
+<?php
+require 'cek-sesi2.php';
+?>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <title>SB Admin 2 - Tables</title>
+
+  <!-- Custom fonts for this template -->
+  <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+
+  <!-- Custom styles for this template -->
+  <link href="css/sb-admin-2.min.css" rel="stylesheet">
+
+  <!-- Custom styles for this page -->
+  <link href="vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
+
+</head>
+
+<body id="page-top">
+<?php require 'koneksi.php'; ?>
+<?php require 'sidebar2.php'; ?>
+      <!-- Main Content -->
+      <div id="content">
+
+<?php require 'navbar.php'; ?>
+
+        <!-- Begin Page Content -->
+        <div class="container-fluid">
+        <div class="d-sm-flex align-items-center justify-content-between ">
+        </div>
+          <!-- DataTales Example -->
+          <div class="card shadow mb-4">
+            <div class="card-header py-3">
+            <h3 style="float: left;"  class="m-0 font-weight- text-primary pull-left">Aktifkan Jadwal Kuliah</h3>
+                       
+            </div>
+            <div class="card-body">
+            <div class="d-sm-flex align-items-center left-content-between">
+            
+              <div class="table-responsive">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                  <thead>
+                    <tr>
+                      <th>No</th>
+                      <th>NIDN</th>
+                      <th>Nama Dosen</th>
+                      <th>Mata Kuliah</th>
+                      <th>Kode Ruang</th>
+                      <th>Waktu </th>
+                      <th>Status</th>
+                      <th>Pilih</th>
+                    
+                    </tr>
+                  </thead>
+                  <tbody>
+				  <?php 
+$query = mysqli_query($koneksi,"SELECT k.kode_kel,d.kd_dos, d.nama_dos,r.kode_ruang, r.nama_ruang,mk.nama_mk,j.waktu, k.id_status
+FROM dosen d LEFT JOIN kelas k  
+ON d.kd_dos=k.kd_dos 
+INNER JOIN matkul mk ON k.kode_mk=mk.kode_mk 
+INNER JOIN ruang r ON r.kode_ruang=k.kode_ruang 
+INNER JOIN jadwal j ON j.id_jadwal=k.id_jadwal
+ORDER BY d.kd_dos, mk.nama_mk");
+$no = 1;
+while ($data = mysqli_fetch_assoc($query)) 
+{
+  //note 
+  $status = $data['id_status'];
+  //formula
+  if($status < 1)
+  {
+     $hasil = "<font ><b>Tidak Aktif</b></font>";
+  }
+  elseif($status > 0)
+  {
+    $hasil = "<font color='green'><b>Aktif</b></font>";
+  }
+  else
+  {
+    $hasil ="-";
+  }
+?>
+                    <tr>
+                    <td scope="row"><?= $no;?></td>
+                      <td><?=$data['kd_dos']?></td>
+                      <td><?=$data['nama_dos']?></td>
+                      <td><?=$data['nama_mk']?></td>
+                      <td><?=$data['kode_ruang']?></td>
+                      <td><?=$data['waktu']?></td>
+                      <td><?=$hasil?></td>
+                      
+					  <td>
+                    <!-- Button untuk modal -->
+<a href="#" type="button"class=" fa fa-edit btn btn-primary btn-md" data-toggle="modal" data-target="#myModal<?php echo $data['kode_kel']; ?>"> </a>
+
+                         
+</td>
+</tr>
+<?php 
+$no++;
+//mysql_close($host);
+?> 
+
+<!-- Modal Edit Mahasiswa-->
+<div class="modal fade" id="myModal<?php echo $data['kode_kel']; ?>" role="dialog">
+<div class="modal-dialog">
+
+<!-- Modal content-->
+<div class="modal-content">
+<div class="modal-header">
+<h4 class="modal-title">Aktivasi Perkuliahan</h4>
+<button type="button" class="close" data-dismiss="modal">&times;</button>
+</div>
+<div class="modal-body">
+<form role="form" action="proses-edit-aktiv.php" method="POST" enctype="multipart/form-data">
+
+<?php
+$id = $data['kode_kel']; 
+$query_edit = mysqli_query($koneksi,"SELECT * FROM kelas WHERE kode_kel='$id'");
+//$result = mysqli_query($conn, $query);
+while ($row = mysqli_fetch_array($query_edit)) {  
+?>
+
+
+<input type="hidden" name="kode_kel" value="<?php echo $row['kode_kel']; ?>">
+
+<div class="form-group">
+<div class="form-row">
+<label  class="col-md-3 col-form-label">Nama Dosen : </label>
+<div class="col-sm-8">
+<input type="text" class="form-control" value="<?= $data['nama_dos']; ?>" readonly=""> 
+</div>
+</div>
+</div>
+
+<div class="form-group">
+<div class="form-row">
+<label  class="col-md-3 col-form-label">Mata Kuliah :  </label>
+<div class="col-sm-8">
+<input type="text" class="form-control" value="<?= $data['nama_mk']; ?>" readonly=""> 
+</div>
+</div>
+</div>
+
+
+<div class="form-group">
+
+<label>Status :</label>
+<div class="col-sm-4">
+<select id="group_user" name="id_status" class="form-control" >                                       
+<option value=""> Pilih </option>                   
+<option value="1"> Aktif</option>
+<option value="0"> Non-Aktif</option>                      
+</select>
+
+</div></div>
+
+
+
+<div class="modal-footer">  
+<button type="submit" class="btn btn-success">Ubah</button>
+<a href="hapus-aktivasi.php?id_aktiv=<?=$row['id_aktiv'];?>" onclick="return confirm('Anda Yakin Ingin Menghapus?')" class="btn btn-danger">Hapus</a>
+<button type="button" class="btn btn-default" data-dismiss="modal">Keluar</button>
+</div>
+<?php 
+}
+//mysql_close($host);
+?>  
+       
+</form>
+</div>
+</div>
+
+</div>
+</div>
+
+<div class="modal fade" id="myModals<?php echo $data['id_ruang']; ?>" role="dialog">
+<div class="modal-dialog">
+
+
+       
+</form>
+</div>
+</div>
+
+</div>
+</div>
+
+ <!-- Modal -->
+  <div id="myModalTambah" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+
+      <!-- konten modal-->
+      <div class="modal-content">
+        <!-- heading modal -->
+        <div class="modal-header">
+          <h4 class="modal-title">Aktivasi Mata Kuliah</h4>
+		    <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <!-- body modal -->
+		<form action="tambah-aktivasi.php" method="POST" enctype="multipart/form-data">
+    <div class="modal-body">
+	   
+    <label for="id_matkul">Nama Mata Kuliah :</label>
+                       <select name="id_matkul" id="id_matkul" class="form-control" required>
+                           <option value=""> - Pilih MataKuliah - </option>
+                           <?php
+                             $id_matkul = mysqli_query($koneksi, "SELECT * FROM matkul ");
+                             while ($data_matkul = mysqli_fetch_array($id_matkul)) {
+                               echo '<option value="'.$data_matkul['id_matkul'].'">'.$data_matkul['nama_mk'].'</option>';
+                             }
+                           ?>
+                       </select>
+                       
+    
+
+              <label for="id_ruang">Ruang :</label>
+               <select name="id_ruang" id="id_ruang" class="form-control" required>
+               <option value=""> - Pilih Ruang - </option>
+               <?php
+               $id_dos = mysqli_query($koneksi, "SELECT * FROM ruang ");
+               while ($data_dosen = mysqli_fetch_array($id_dos)) {
+               echo '<option value="'.$data_dosen['id_ruang'].'">'.$data_dosen['kode_ruang'].'</option>';
+               }
+               ?>
+              </select>
+
+              <label>Waktu Mulai :</label>
+    <input type="time" class="form-control" name="waktu_mulai">
+
+              <label>Waktu Selesai :</label>
+    <input type="time" class="form-control" name="waktu_selesai">
+
+  
+                       <label>Status :</label>
+                    <select id="group_user" name="status" class="form-control" required >
+                    <option > - Pilih Status - </option>                 
+                    <option value="1"> Aktif</option>
+                    <option value="0"> Non-Aktif</option>                      
+                    </select>
+        </div>
+        <!-- footer modal -->
+        <div class="modal-footer">
+		<button type="submit" class="btn btn-primary" >Submit</button>
+		</form>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Keluar</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+<!-- konten Print-->
+  <div id="myModalPrint" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+
+      <!-- konten modal-->
+      <div class="modal-content">
+        <!-- heading modal -->
+        <div class="modal-header">
+          <h4 class="modal-title">Cetak Pengeluaran</h4>
+		    <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <!-- body modal -->
+		
+    <div class="modal-body">
+        <form action="cetak-karyawan.php" method="POST" target="_blank">
+          <div class="form-group">Dari Tanggal: </div>
+              <div class="form-group">
+                  <input type="date" class="form-control" name="awal">
+              </div>  
+            
+          <div class="form-group">Sampai Tanggal : </div>
+              <div class="form-group">
+                  <input type="date" class="form-control" name="akhir">
+              </div>  
+        
+        
+        <div class="form-group">Proyek : 
+          <select name="proyek" id="proyek" class="form-control">
+          <option value=""> - Pilih Proyek - </option>
+                        <?php
+                          $idproyek = mysqli_query($koneksi, "SELECT * FROM proyek where is_active='1' and nonzone='0' ");
+                          while ($data_proyek = mysqli_fetch_array($idproyek)) {
+                            echo '<option value="'.$data_proyek['idproyek'].'">'.$data_proyek['nama_proyek'].'</option>';
+                          }
+                        ?>
+                    </select>
+                    </div>
+        <!-- footer modal -->
+        <div class="modal-footer">
+		<button type="submit" class="btn btn-primary" >Cetak</button>
+		</form>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Keluar</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+<?php               
+} 
+?>
+
+
+
+
+
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+		  
+
+        </div>
+        <!-- /.container-fluid -->
+
+      </div>
+      <!-- End of Main Content -->
+
+<?php require 'footer.php'?>
+
+    </div>
+    <!-- End of Content Wrapper -->
+
+  </div>
+  <!-- End of Page Wrapper -->
+
+  <!-- Scroll to Top Button-->
+  <a class="scroll-to-top rounded" href="#page-top">
+    <i class="fas fa-angle-up"></i>
+  </a>
+
+  <!-- Logout Modal-->
+<?php require 'logout-modal.php';?>
+
+  <!-- Bootstrap core JavaScript-->
+  <script src="vendor/jquery/jquery.min.js"></script>
+  <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Core plugin JavaScript-->
+  <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
+
+  <!-- Custom scripts for all pages-->
+  <script src="js/sb-admin-2.min.js"></script>
+
+  <!-- Page level plugins -->
+  <script src="vendor/datatables/jquery.dataTables.min.js"></script>
+  <script src="vendor/datatables/dataTables.bootstrap4.min.js"></script>
+
+  <!-- Page level custom scripts -->
+  <script src="js/demo/datatables-demo.js"></script>
+
+</body>
+
+</html>
